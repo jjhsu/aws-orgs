@@ -13,6 +13,8 @@ Usage:
                                                  [--disable-expired]
                                                  [--opt-ttl HOURS]
                                                  [--users --roles --credentials]
+                                                 [--delegations]
+                                                 [--groupname PATTERN]
                                                  [--account NAME] [--full]
                                                  [--exec] [-q] [-d|-dd]
   awsauth (--help|--version)
@@ -45,6 +47,9 @@ Options:
   --users                   Print user and groups report.
   --roles                   Print roles and custom policies report.
   --credentials             Print IAM credentials report.
+  --delegations             Print IAM delegations report.
+  --groupname PATTERN       Used with --delegations. Regex pattern for limiting
+                            what groups to report on.
   --full                    Print full details in reports.
   --account NAME            Just report for a single named account.
 
@@ -806,6 +811,8 @@ def main():
                     if a['Status'] == 'ACTIVE'])
 
     if args['report']:
+        if args['--delegations']:
+            display_provisioned_groups(log, args, deployed, auth_credentials)
         if args['--account']:
             deployed['accounts'] = [lookup(
                 deployed['accounts'], 'Name', args['--account']
@@ -824,7 +831,12 @@ def main():
             report_maker(log, deployed['accounts'], args['--org-access-role'], 
                 credentials_report, "IAM Credentials Report in all Org Accounts:"
             )
-        if not (args['--users'] or args['--credentials'] or args['--roles']):
+        if not (
+            args['--users'] or 
+            args['--roles'] or
+            args['--credentials'] or 
+            args['--delegations']
+        ):
             report_maker(log, deployed['accounts'], args['--org-access-role'], 
                 account_authorization_report, "IAM Account Authorization:",
                 verbose=args['--full'],
